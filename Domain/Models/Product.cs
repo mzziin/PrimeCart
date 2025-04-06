@@ -10,7 +10,7 @@ public class Product
     public Guid SellerId { get; set; }
     public Guid CategoryId { get; set; }
     public DateOnly CreatedAt { get; set; }
-    public bool IsDeleted { get; set; }
+    public bool IsDeleted { get; set; } = false;
     
     public Seller Seller { get; set; }
     public Category Category { get; set; }
