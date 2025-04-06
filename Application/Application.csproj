@@ -11,4 +11,8 @@
       <Folder Include="IServices\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Domain\Domain.csproj" />
+    </ItemGroup>
+
 </Project>
