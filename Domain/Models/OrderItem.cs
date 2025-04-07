@@ -7,7 +7,6 @@ public class OrderItem
     public Guid Id { get; set; }
     public Guid OrderId { get; set; }
     public Guid ProductId { get; set; }
-    public Guid SellerId { get; set; }
     public OrderItemStatus Status { get; set; } = OrderItemStatus.Pending;
     public int Quantity { get; set; }
     public decimal Price { get; set; }
@@ -15,5 +14,4 @@ public class OrderItem
     
     public Product Product { get; set; }
     public Order Order { get; set; }
-    public Seller Seller { get; set; }
 }
