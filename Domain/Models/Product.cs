@@ -14,4 +14,7 @@ public class Product
     
     public Seller Seller { get; set; }
     public Category Category { get; set; }
+    public ShoppingCartItem ShoppingCartItem { get; set; }
+    public ICollection<OrderItem> OrderItems { get; set; }
+    public ICollection<WishlistItem> WishlistItems { get; set; }
 }
