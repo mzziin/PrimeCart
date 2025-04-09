@@ -6,5 +6,5 @@ public enum OrderItemStatus
     Packed,
     Shipped,
     Delivered,
-    Cancelled,
+    Cancelled
 }

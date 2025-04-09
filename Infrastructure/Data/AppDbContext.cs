@@ -24,71 +24,89 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
+        
+        // --- User ---
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.ToTable("Users");
+            // setup Id as a non-clustered pk
+            entity.HasKey(e => e.Id).IsClustered(false);
+            
+            /*
+            Make RowId a unique and clustered index for
+            efficient inserts and improved write performance.
+            This also reduces index fragmentation caused by random Guid values.
+            */
+            entity.Property(p => p.RowId).UseIdentityColumn();
+            entity.HasIndex(p => p.RowId)
+                .IsUnique()
+                .IsClustered();
+            
+            entity.Property(u => u.Username).IsRequired().HasMaxLength(50);
+            entity.HasIndex(u => u.Username).IsUnique();
+            entity.Property(u => u.Email).IsRequired().HasMaxLength(100);
+            entity.HasIndex(e => e.Email).IsUnique();
+            entity.Property(u => u.PasswordHash).IsRequired().HasMaxLength(255);
+            
+            // Convert Role type enum to string
+            entity.Property(p => p.Role)
+                .IsRequired()
+                .HasConversion<string>();
+            
+            // Avoid soft deleted users globally while querying
+            entity.HasQueryFilter(u => u.IsActive);
+        });
+        
         // --- Customer ---
         modelBuilder.Entity<Customer>(entity =>
         {
             entity.ToTable("Customers");
-            // setup Id as a non-clustered pk
-            entity.HasKey(c => c.Id).IsClustered(false);
+            entity.HasKey(c => c.Id);
 
-            /*
-            Make RowId a unique and clustered index for 
-            efficient inserts and improved write performance. 
-            This also reduces index fragmentation caused by random Guid values.
-            */
-            entity.Property(c => c.RowId).UseIdentityColumn();
-            entity.HasIndex(c => c.RowId)
-                .IsUnique()
-                .IsClustered();
-
-            entity.HasIndex(c => c.Email).IsUnique();
+            entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
+            entity.Property(c => c.Phone).IsRequired().HasMaxLength(15);
             entity.HasIndex(c => c.Phone).IsUnique();
 
-            entity.Property(c => c.Name).HasMaxLength(100);
-            entity.Property(c => c.Email).HasMaxLength(200);
-            entity.Property(c => c.Phone).HasMaxLength(15);
+            entity.HasOne(c => c.User)
+                .WithOne(u => u.Customer)
+                .HasForeignKey<Customer>(c => c.UserId);
 
             // Avoid soft deleted customers globally while querying
-            entity.HasQueryFilter(c => !c.IsDeleted);
+            entity.HasQueryFilter(c => c.User.IsActive);
         });
 
         // --- Seller ---
         modelBuilder.Entity<Seller>(entity =>
         {
             entity.ToTable("Sellers");
-            entity.HasKey(s => s.Id).IsClustered(false);
-
-            entity.Property(s => s.RowId).UseIdentityColumn();
-            entity.HasIndex(c => c.RowId)
-                .IsUnique()
-                .IsClustered();
-
-            entity.HasIndex(s => s.Email).IsUnique();
+            entity.HasKey(s => s.Id);
+            
+            entity.Property(s => s.Name).IsRequired().HasMaxLength(100);
+            entity.Property(s => s.StoreName).IsRequired().HasMaxLength(100);
             entity.HasIndex(s => s.StoreName).IsUnique();
+            entity.Property(s => s.Phone).IsRequired().HasMaxLength(15);
             entity.HasIndex(s => s.Phone).IsUnique();
-
-            entity.Property(s => s.Name).HasMaxLength(100);
-            entity.Property(s => s.StoreName).HasMaxLength(100);
-            entity.Property(s => s.Email).HasMaxLength(200);
-            entity.Property(s => s.Phone).HasMaxLength(15);
+            
+            entity.HasOne(s => s.User)
+                .WithOne(u => u.Seller)
+                .HasForeignKey<Seller>(s => s.UserId);
 
             // Avoid soft deleted sellers globally while querying
-            entity.HasQueryFilter(s => !s.IsDeleted);
+            entity.HasQueryFilter(s => s.User.IsActive);
         });
 
         // --- Product ---
         modelBuilder.Entity<Product>(entity =>
         {
             entity.ToTable("Products");
+            
             entity.HasKey(p => p.Id).IsClustered(false);
-
             entity.Property(p => p.RowId).UseIdentityColumn();
             entity.HasIndex(p => p.RowId)
                 .IsUnique()
                 .IsClustered();
 
-            entity.Property(p => p.Name).HasMaxLength(100);
+            entity.Property(p => p.Name).IsRequired().HasMaxLength(100);
             entity.Property(p => p.Description).HasMaxLength(1000);
             entity.Property(p => p.Price).HasColumnType("decimal(18,2)");
 
@@ -108,17 +126,17 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Address>(entity =>
         {
             entity.ToTable("Addresses");
+            
             entity.HasKey(a => a.Id).IsClustered(false);
-
             entity.Property(a => a.RowId).UseIdentityColumn();
             entity.HasIndex(a => a.RowId)
                 .IsUnique()
                 .IsClustered();
 
-            entity.Property(a => a.Street).HasMaxLength(100);
-            entity.Property(a => a.City).HasMaxLength(100);
-            entity.Property(a => a.State).HasMaxLength(100);
-            entity.Property(a => a.Country).HasMaxLength(100);
+            entity.Property(a => a.Street).IsRequired().HasMaxLength(100);
+            entity.Property(a => a.City).IsRequired().HasMaxLength(100);
+            entity.Property(a => a.State).IsRequired().HasMaxLength(100);
+            entity.Property(a => a.Country).IsRequired().HasMaxLength(100);
 
             entity.HasOne(a => a.customer)
                 .WithMany(c => c.Addresses)
@@ -129,22 +147,22 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Category>(entity =>
         {
             entity.ToTable("Categories");
+            
             entity.HasKey(c => c.Id).IsClustered(false);
-
             entity.Property(c => c.RowId).UseIdentityColumn();
             entity.HasIndex(c => c.RowId)
                 .IsUnique()
                 .IsClustered();
 
-            entity.Property(c => c.Name).HasMaxLength(100);
+            entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
         });
 
         // --- Order ---
         modelBuilder.Entity<Order>(entity =>
         {
             entity.ToTable("Orders");
+            
             entity.HasKey(o => o.Id).IsClustered(false);
-
             entity.Property(o => o.RowId).UseIdentityColumn();
             entity.HasIndex(o => o.RowId)
                 .IsUnique()
@@ -161,15 +179,15 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<OrderItem>(entity =>
         {
             entity.ToTable("OrderItems");
+            
             entity.HasKey(o => o.Id).IsClustered(false);
-
             entity.Property(o => o.RowId).UseIdentityColumn();
             entity.HasIndex(o => o.RowId)
                 .IsUnique()
                 .IsClustered();
 
             // Convert status type enum in OrderItem to string
-            entity.Property(o => o.Status).HasConversion<string>();
+            entity.Property(o => o.Status).IsRequired().HasConversion<string>();
             entity.Property(o => o.Price).HasColumnType("decimal(18,2)");
 
             entity.HasOne(o => o.Product)
@@ -185,8 +203,8 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ShoppingCart>(entity =>
         {
             entity.ToTable("ShoppingCarts");
+            
             entity.HasKey(c => c.Id).IsClustered(false);
-
             entity.Property(s => s.RowId).UseIdentityColumn();
             entity.HasIndex(s => s.RowId)
                 .IsUnique()
@@ -201,8 +219,8 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ShoppingCartItem>(entity =>
         {
             entity.ToTable("ShoppingCarts");
+            
             entity.HasKey(c => c.Id).IsClustered(false);
-
             entity.Property(s => s.RowId).UseIdentityColumn();
             entity.HasIndex(s => s.RowId)
                 .IsUnique()
@@ -221,8 +239,8 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Wishlist>(entity =>
         {
             entity.ToTable("Wishlists");
+            
             entity.HasKey(w => w.Id).IsClustered(false);
-
             entity.Property(w => w.RowId).UseIdentityColumn();
             entity.HasIndex(w => w.RowId)
                 .IsUnique()
@@ -237,8 +255,8 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<WishlistItem>(entity =>
         {
             entity.ToTable("WishlistItems");
+            
             entity.HasKey(w => w.Id).IsClustered(false);
-
             entity.Property(w => w.RowId).UseIdentityColumn();
             entity.HasIndex(w => w.RowId)
                 .IsUnique()
