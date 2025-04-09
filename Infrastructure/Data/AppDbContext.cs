@@ -29,7 +29,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Customer>(entity =>
         {
             entity.ToTable("Customers");
-            entity.HasKey(c => c.Id);
+            entity.HasKey(c => c.Id).IsClustered(false);
+
+            entity.Property(c => c.RowId).UseIdentityColumn();
+            entity.HasIndex(c => c.RowId)
+                .IsUnique()
+                .IsClustered();
 
             entity.HasIndex(c => c.Email).IsUnique();
             entity.HasIndex(c => c.Phone).IsUnique();
@@ -46,7 +51,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Seller>(entity =>
         {
             entity.ToTable("Sellers");
-            entity.HasKey(s => s.Id);
+            entity.HasKey(s => s.Id).IsClustered(false);
+            
+            entity.Property(s => s.RowId).UseIdentityColumn();
+            entity.HasIndex(c => c.RowId)
+                .IsUnique()
+                .IsClustered();
 
             entity.HasIndex(s => s.Email).IsUnique();
             entity.HasIndex(s => s.StoreName).IsUnique();
@@ -65,7 +75,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Product>(entity =>
         {
             entity.ToTable("Products");
-            entity.HasKey(p => p.Id);
+            entity.HasKey(p => p.Id).IsClustered(false);
+            
+            entity.Property(p => p.RowId).UseIdentityColumn();
+            entity.HasIndex(p => p.RowId)
+                .IsUnique()
+                .IsClustered();
 
             entity.Property(p => p.Name).HasMaxLength(100);
             entity.Property(p => p.Description).HasMaxLength(1000);
@@ -87,7 +102,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Address>(entity =>
         {
             entity.ToTable("Addresses");
-            entity.HasKey(a => a.Id);
+            entity.HasKey(a => a.Id).IsClustered(false);
+            
+            entity.Property(a => a.RowId).UseIdentityColumn();
+            entity.HasIndex(a => a.RowId)
+                .IsUnique()
+                .IsClustered();
             
             entity.Property(a=>a.Street).HasMaxLength(100);
             entity.Property(a=>a.City).HasMaxLength(100);
@@ -103,7 +123,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Category>(entity =>
         {
             entity.ToTable("Categories");
-            entity.HasKey(c => c.Id);
+            entity.HasKey(c => c.Id).IsClustered(false);
+            
+            entity.Property(c => c.RowId).UseIdentityColumn();
+            entity.HasIndex(c => c.RowId)
+                .IsUnique()
+                .IsClustered();
 
             entity.Property(c => c.Name).HasMaxLength(100);
         });
@@ -112,7 +137,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Order>(entity =>
         {
             entity.ToTable("Orders");
-            entity.HasKey(o => o.Id);
+            entity.HasKey(o => o.Id).IsClustered(false);
+            
+            entity.Property(o => o.RowId).UseIdentityColumn();
+            entity.HasIndex(o => o.RowId)
+                .IsUnique()
+                .IsClustered();
             
             entity.Property(o=>o.TotalAmount).HasColumnType("Decimal(18,2)");
 
@@ -125,7 +155,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<OrderItem>(entity =>
         {
             entity.ToTable("OrderItems");
-            entity.HasKey(o => o.Id);
+            entity.HasKey(o => o.Id).IsClustered(false);
+            
+            entity.Property(o => o.RowId).UseIdentityColumn();
+            entity.HasIndex(o => o.RowId)
+                .IsUnique()
+                .IsClustered();
             
             // Convert status type enum in OrderItem to string
             entity.Property(o => o.Status).HasConversion<string>();
@@ -144,7 +179,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ShoppingCart>(entity =>
         {
             entity.ToTable("ShoppingCarts");
-            entity.HasKey(c => c.Id);
+            entity.HasKey(c => c.Id).IsClustered(false);
+            
+            entity.Property(s => s.RowId).UseIdentityColumn();
+            entity.HasIndex(s => s.RowId)
+                .IsUnique()
+                .IsClustered();
 
             entity.HasOne(s => s.Customer)
                 .WithOne(c => c.ShoppingCart)
@@ -155,7 +195,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ShoppingCartItem>(entity =>
         {
             entity.ToTable("ShoppingCarts");
-            entity.HasKey(c => c.Id);
+            entity.HasKey(c => c.Id).IsClustered(false);
+            
+            entity.Property(s => s.RowId).UseIdentityColumn();
+            entity.HasIndex(s => s.RowId)
+                .IsUnique()
+                .IsClustered();
             
             entity.HasOne(s=>s.Cart)
                 .WithMany(c=>c.ShoppingCartItems)
@@ -170,7 +215,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Wishlist>(entity =>
         {
             entity.ToTable("Wishlists");
-            entity.HasKey(c => c.Id);
+            entity.HasKey(w => w.Id).IsClustered(false);
+            
+            entity.Property(w => w.RowId).UseIdentityColumn();
+            entity.HasIndex(w => w.RowId)
+                .IsUnique()
+                .IsClustered();
             
             entity.HasOne(s => s.Customer)
                 .WithOne(c => c.Wishlist)
@@ -181,11 +231,16 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<WishlistItem>(entity =>
         {
             entity.ToTable("WishlistItems");
-            entity.HasKey(c => c.Id);
+            entity.HasKey(w => w.Id).IsClustered(false);
+            
+            entity.Property(w => w.RowId).UseIdentityColumn();
+            entity.HasIndex(w => w.RowId)
+                .IsUnique()
+                .IsClustered();
 
-            entity.HasOne(s => s.Product)
-                .WithMany(w => w.WishlistItems)
-                .HasForeignKey(s => s.ProductId);
+            entity.HasOne(w => w.Product)
+                .WithMany(p => p.WishlistItems)
+                .HasForeignKey(w => w.ProductId);
             
             entity.HasOne(w=>w.Wishlist)
                 .WithMany(w=>w.WishlistItems)

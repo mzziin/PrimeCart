@@ -3,6 +3,7 @@ namespace Domain.Models;
 public class ShoppingCart
 {
     public Guid Id { get; set; }
+    public int RowId { get; set; }
     public Guid CustomerId { get; set; }
     
     public Customer Customer { get; set; }

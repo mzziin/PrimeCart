@@ -5,6 +5,7 @@ namespace Domain.Models;
 public class OrderItem
 {
     public Guid Id { get; set; }
+    public int RowId { get; set; }
     public Guid OrderId { get; set; }
     public Guid ProductId { get; set; }
     public OrderItemStatus Status { get; set; } = OrderItemStatus.Pending;
