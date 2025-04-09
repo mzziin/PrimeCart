@@ -61,8 +61,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Customer>(entity =>
         {
             entity.ToTable("Customers");
-            entity.HasKey(c => c.Id);
-
+            entity.HasKey(c => c.Id).IsClustered(false);
+            entity.Property(c => c.RowId).UseIdentityColumn();
+            entity.HasIndex(c => c.RowId)
+                .IsUnique()
+                .IsClustered();
+            
             entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
             entity.Property(c => c.Phone).IsRequired().HasMaxLength(15);
             entity.HasIndex(c => c.Phone).IsUnique();
@@ -79,7 +83,11 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Seller>(entity =>
         {
             entity.ToTable("Sellers");
-            entity.HasKey(s => s.Id);
+            entity.HasKey(s => s.Id).IsClustered(false);
+            entity.Property(s => s.RowId).UseIdentityColumn();
+            entity.HasIndex(s=>s.RowId)
+                .IsUnique()
+                .IsClustered();
             
             entity.Property(s => s.Name).IsRequired().HasMaxLength(100);
             entity.Property(s => s.StoreName).IsRequired().HasMaxLength(100);
