@@ -45,7 +45,7 @@ public class AppDbContext : DbContext
             entity.Property(u => u.Username).IsRequired().HasMaxLength(50);
             entity.HasIndex(u => u.Username).IsUnique();
             entity.Property(u => u.Email).IsRequired().HasMaxLength(100);
-            entity.HasIndex(e => e.Email).IsUnique();
+            entity.HasIndex(u => u.Email).IsUnique();
             entity.Property(u => u.PasswordHash).IsRequired().HasMaxLength(255);
             
             // Convert Role type enum to string
@@ -54,7 +54,7 @@ public class AppDbContext : DbContext
                 .HasConversion<string>();
             
             // Avoid soft deleted users globally while querying
-            entity.HasQueryFilter(u => u.IsActive);
+            // entity.HasQueryFilter(u => u.IsActive);
         });
         
         // --- Customer ---
@@ -74,9 +74,6 @@ public class AppDbContext : DbContext
             entity.HasOne(c => c.User)
                 .WithOne(u => u.Customer)
                 .HasForeignKey<Customer>(c => c.UserId);
-
-            // Avoid soft deleted customers globally while querying
-            entity.HasQueryFilter(c => c.User.IsActive);
         });
 
         // --- Seller ---
@@ -98,9 +95,6 @@ public class AppDbContext : DbContext
             entity.HasOne(s => s.User)
                 .WithOne(u => u.Seller)
                 .HasForeignKey<Seller>(s => s.UserId);
-
-            // Avoid soft deleted sellers globally while querying
-            entity.HasQueryFilter(s => s.User.IsActive);
         });
 
         // --- Product ---
@@ -125,9 +119,6 @@ public class AppDbContext : DbContext
             entity.HasOne(p => p.Category)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CategoryId);
-
-            // Avoid soft deleted products globally while querying
-            entity.HasQueryFilter(p => !p.IsDeleted);
         });
 
         // --- Address ---
@@ -146,9 +137,11 @@ public class AppDbContext : DbContext
             entity.Property(a => a.State).IsRequired().HasMaxLength(100);
             entity.Property(a => a.Country).IsRequired().HasMaxLength(100);
 
-            entity.HasOne(a => a.customer)
+            entity.HasOne(a => a.Customer)
                 .WithMany(c => c.Addresses)
-                .HasForeignKey(a => a.customerId);
+                .HasForeignKey(a => a.CustomerId);
+            
+            entity.HasQueryFilter(a => a.Customer.User.IsActive);
         });
 
         // --- Category ---
@@ -200,7 +193,8 @@ public class AppDbContext : DbContext
 
             entity.HasOne(o => o.Product)
                 .WithMany(p => p.OrderItems)
-                .HasForeignKey(o => o.ProductId);
+                .HasForeignKey(o => o.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(o => o.Order)
                 .WithMany(o => o.OrderItems)
@@ -226,7 +220,7 @@ public class AppDbContext : DbContext
         // --- ShoppingCart Items ---
         modelBuilder.Entity<ShoppingCartItem>(entity =>
         {
-            entity.ToTable("ShoppingCarts");
+            entity.ToTable("ShoppingCartItems");
             
             entity.HasKey(c => c.Id).IsClustered(false);
             entity.Property(s => s.RowId).UseIdentityColumn();
@@ -236,11 +230,13 @@ public class AppDbContext : DbContext
 
             entity.HasOne(s => s.Cart)
                 .WithMany(c => c.ShoppingCartItems)
-                .HasForeignKey(s => s.CartId);
+                .HasForeignKey(s => s.CartId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(s => s.Product)
                 .WithOne(p => p.ShoppingCartItem)
-                .HasForeignKey<ShoppingCartItem>(s => s.ProductId);
+                .HasForeignKey<ShoppingCartItem>(s => s.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // --- Wishlist ---
@@ -272,11 +268,13 @@ public class AppDbContext : DbContext
 
             entity.HasOne(w => w.Product)
                 .WithMany(p => p.WishlistItems)
-                .HasForeignKey(w => w.ProductId);
+                .HasForeignKey(w => w.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(w => w.Wishlist)
                 .WithMany(w => w.WishlistItems)
-                .HasForeignKey(w => w.WishlistId);
+                .HasForeignKey(w => w.WishlistId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
