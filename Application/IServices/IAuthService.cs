@@ -4,8 +4,7 @@ namespace Application.IServices;
 
 public interface IAuthService
 {
-    void RegisterCustomer(RegisterCustomer registerCustomer);
-    void RegisterSeller(RegisterSeller registerSeller);
-    void Login(LoginUser loginUser);
-    void Logout();
+    Task<int> RegisterCustomer(RegisterCustomer registerCustomer);
+    Task<int> RegisterSeller(RegisterSeller registerSeller);
+    Task<string> Login(LoginUser loginUser);
 }
