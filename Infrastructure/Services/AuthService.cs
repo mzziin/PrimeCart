@@ -1,3 +1,4 @@
+using Application.Common;
 using Application.DTOs;
 using Application.IServices;
 using Domain.Enums;
@@ -20,25 +21,28 @@ public class AuthService : IAuthService
         _jwtService = jwtService;
     }
 
-    public async Task<int> RegisterCustomer(RegisterCustomer registerCustomer)
+    public async Task<Result<bool>> RegisterCustomer(RegisterCustomer registerCustomer)
     {
         var userExist = await _context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(e =>
                 e.Email == registerCustomer.Email && e.IsActive);
-        if (userExist is not null) return 0;
+        if (userExist is not null)
+            return Result<bool>.Failure("Email already exists", 409);
 
         var phoneExist = await _context.Customers
             .AsNoTracking()
             .FirstOrDefaultAsync(e =>
                 e.Phone == registerCustomer.Phone && e.User.IsActive);
-        if (phoneExist is not null) return 0;
+        if (phoneExist is not null)
+            return Result<bool>.Failure("Phone already exists", 409);
 
         var usernameExist = await _context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(e =>
                 e.Username == registerCustomer.Username && e.IsActive);
-        if (usernameExist is not null) return 0;
+        if (usernameExist is not null)
+            return Result<bool>.Failure("Username already exists", 409);
 
         var user = await _context.Users.AddAsync(new User
         {
@@ -59,28 +63,38 @@ public class AuthService : IAuthService
             UserId = user.Entity.Id
         });
 
-        return await _context.SaveChangesAsync();
+        var result = await _context.SaveChangesAsync();
+        if(result != 2)
+            return Result<bool>.Failure("Failed to register user");
+
+        return Result<bool>.Success(true, 201);
     }
 
-    public async Task<int> RegisterSeller(RegisterSeller registerSeller)
+    public async Task<Result<bool>> RegisterSeller(RegisterSeller registerSeller)
     {
         var userExist = await _context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(e =>
                 e.Email == registerSeller.Email && e.IsActive);
-        if (userExist is not null) return 0;
+        
+        if (userExist is not null)
+            return Result<bool>.Failure("Email already exists", 409);
 
         var usernameExist = await _context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(e =>
                 e.Username == registerSeller.Username);
-        if (usernameExist is not null) return 0;
+        
+        if (usernameExist is not null)
+            return Result<bool>.Failure("Username already exists", 409);
 
         var phoneExist = await _context.Customers
             .AsNoTracking()
             .FirstOrDefaultAsync(e => 
                 e.Phone == registerSeller.Phone);
-        if (phoneExist is not null) return 0;
+        
+        if (phoneExist is not null)
+            return Result<bool>.Failure("Phone already exists", 409);
 
         var user = await _context.Users.AddAsync(new User
         {
@@ -101,10 +115,14 @@ public class AuthService : IAuthService
             UserId = user.Entity.Id
         });
 
-        return await _context.SaveChangesAsync();
+        var result = await _context.SaveChangesAsync();
+        if(result != 2) 
+            return Result<bool>.Failure("Something went wrong");
+        
+        return Result<bool>.Success(true, 201);
     }
 
-    public async Task<string> Login(LoginUser loginUser)
+    public async Task<Result<string>> Login(LoginUser loginUser)
     {
         var user = await _context.Users
             .Where(e => e.Username == loginUser.Username && e.IsActive)
@@ -118,10 +136,10 @@ public class AuthService : IAuthService
             .FirstOrDefaultAsync();
 
         if (user is null || !_passwordHasher.VerifyPassword(loginUser.Password, user.PasswordHash))
-            throw new UnauthorizedAccessException("Invalid credentials.");
+            return Result<string>.Failure("Invalid username or password", 400);
 
         var userId = user.Role == UserRole.Customer ? user.CustomerId!.Value : user.SellerId!.Value;
 
-        return _jwtService.GenerateToken(userId, user.Role);
+        return Result<string>.Success(_jwtService.GenerateToken(userId, user.Role)); 
     }
 }

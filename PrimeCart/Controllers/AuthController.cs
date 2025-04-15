@@ -21,26 +21,25 @@ namespace PrimeCart.Controllers
         public async Task<IActionResult> Register([FromBody] RegisterCustomer registerCustomer)
         {
             var result = await _authService.RegisterCustomer(registerCustomer);
-            if (result == 2) return Ok(result);
 
-            return StatusCode((int)HttpStatusCode.InternalServerError);
+            return StatusCode(result.StatusCode);
         }
 
         [HttpPost("/seller/register")]
         public async Task<IActionResult> RegisterSeller([FromBody] RegisterSeller registerSeller)
         {
             var result = await _authService.RegisterSeller(registerSeller);
-            if (result == 2) return Ok(result);
             
-            return StatusCode((int)HttpStatusCode.InternalServerError);
+            return StatusCode(result.StatusCode);
         }
 
-        [HttpPost("/user/login")]
+        [HttpPost("/login")]
         public async Task<IActionResult> Login([FromBody] LoginUser loginUser)
         {
-            var token = await _authService.Login(loginUser);
-            if (token == "") return NotFound();
-            return Ok(token);
+            var result = await _authService.Login(loginUser);
+            if (!result.IsSuccess) 
+                return StatusCode(result.StatusCode);
+            return StatusCode(result.StatusCode, result.Value);
         }
     }
 }
