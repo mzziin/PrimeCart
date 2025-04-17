@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace PrimeCart.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/products")]
     [ApiController]
     public class ProductController : ControllerBase
     {
@@ -41,8 +41,10 @@ namespace PrimeCart.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Seller")]
-        public async Task<IActionResult> AddProduct(CreateProductRequest createProduct)
+        public async Task<IActionResult> AddProduct([FromBody] CreateProductRequest createProduct)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             createProduct.SellerId = userId;
 
@@ -56,7 +58,7 @@ namespace PrimeCart.Controllers
 
         [HttpPut("{id:guid}")]
         [Authorize(Roles = "Seller")]
-        public async Task<IActionResult> UpdateProduct(Guid id, UpdateProductRequest updateProduct)
+        public async Task<IActionResult> UpdateProduct(Guid id, [FromBody] UpdateProductRequest updateProduct)
         {
             var response = await _productService.UpdateProductAsync(id, updateProduct);
             
