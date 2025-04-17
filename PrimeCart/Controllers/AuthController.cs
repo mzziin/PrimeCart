@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace PrimeCart.Controllers
 {
-
     [Route("api/auth")]
     [ApiController]
     public class AuthController : ControllerBase
@@ -22,24 +21,35 @@ namespace PrimeCart.Controllers
         {
             var result = await _authService.RegisterCustomer(registerCustomer);
 
-            return StatusCode(result.StatusCode);
+            if (!result.IsSuccess)
+                return StatusCode(result.StatusCode, result.Error);
+
+            return StatusCode(result.StatusCode, "Customer registered successfully");
         }
 
         [HttpPost("/seller/register")]
         public async Task<IActionResult> RegisterSeller([FromBody] RegisterSeller registerSeller)
         {
             var result = await _authService.RegisterSeller(registerSeller);
-            
-            return StatusCode(result.StatusCode);
+
+            if (!result.IsSuccess)
+                return StatusCode(result.StatusCode, result.Error);
+
+            return StatusCode(result.StatusCode, "Seller registered successfully");
         }
 
         [HttpPost("/login")]
         public async Task<IActionResult> Login([FromBody] LoginUser loginUser)
         {
             var result = await _authService.Login(loginUser);
-            if (!result.IsSuccess) 
-                return StatusCode(result.StatusCode);
-            return StatusCode(result.StatusCode, result.Value);
+            if (!result.IsSuccess)
+                return StatusCode(result.StatusCode, result.Error);
+
+            return StatusCode(result.StatusCode, new
+            {
+                message = "Login successful",
+                token = result.Value
+            });
         }
     }
 }
