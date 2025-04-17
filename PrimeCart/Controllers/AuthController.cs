@@ -18,7 +18,7 @@ namespace PrimeCart.Controllers
         }
 
         [HttpPost("/customer/register")]
-        public async Task<IActionResult> Register([FromBody] RegisterCustomer registerCustomer)
+        public async Task<IActionResult> RegisterCustomer([FromBody] RegisterCustomer registerCustomer)
         {
             var result = await _authService.RegisterCustomer(registerCustomer);
 
