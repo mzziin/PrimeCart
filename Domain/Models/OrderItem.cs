@@ -11,7 +11,7 @@ public class OrderItem
     public OrderItemStatus Status { get; set; } = OrderItemStatus.Pending;
     public int Quantity { get; set; }
     public decimal Price { get; set; }
-    public DateOnly DeliveredAt { get; set; }
+    public DateOnly? DeliveredAt { get; set; }
     
     public Product Product { get; set; }
     public Order Order { get; set; }
