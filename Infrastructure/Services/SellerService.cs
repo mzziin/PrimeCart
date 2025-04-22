@@ -39,6 +39,16 @@ public class SellerService : ISellerService
 
     public async Task<Result<SellerResponse>> UpdateSeller(Guid id, UpdateSellerRequest? updateSellerRequest)
     {
+        if (updateSellerRequest is null)
+            return Result<SellerResponse>.Failure("Update request cannot be null", 400);
+        
+        bool hasUpdates = !string.IsNullOrEmpty(updateSellerRequest.Name) ||
+                          !string.IsNullOrEmpty(updateSellerRequest.StoreName) ||
+                          !string.IsNullOrEmpty(updateSellerRequest.Phone) ||
+                          !string.IsNullOrEmpty(updateSellerRequest.Password);
+        if (!hasUpdates)
+            return Result<SellerResponse>.Failure("No update fields provided", 400);
+        
         var seller = await _context.Sellers
             .Where(s=>s.User.IsActive)
             .Include(s => s.User)
@@ -53,19 +63,19 @@ public class SellerService : ISellerService
         
         try
         {
-            if (!string.IsNullOrEmpty(updateSellerRequest?.Name))
+            if (!string.IsNullOrEmpty(updateSellerRequest.Name))
             {
                 seller.Name = updateSellerRequest.Name;
                 isModified = true;
             }
 
-            if (!string.IsNullOrEmpty(updateSellerRequest?.StoreName))
+            if (!string.IsNullOrEmpty(updateSellerRequest.StoreName))
             {
                 seller.StoreName = updateSellerRequest.StoreName;
                 isModified = true;
             }
 
-            if (!string.IsNullOrEmpty(updateSellerRequest?.Phone) && updateSellerRequest.Phone != seller.Phone)
+            if (!string.IsNullOrEmpty(updateSellerRequest.Phone) && updateSellerRequest.Phone != seller.Phone)
             {
                 var phoneExist = await _context.Sellers
                     .Where(u => u.User.IsActive)
