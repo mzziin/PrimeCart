@@ -21,14 +21,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
+
         // --- User ---
         modelBuilder.Entity<User>(entity =>
         {
             entity.ToTable("Users");
             // setup Id as a non-clustered pk
             entity.HasKey(e => e.Id).IsClustered(false);
-            
+
             /*
             Make RowId a unique and clustered index for
             efficient inserts and improved write performance.
@@ -38,22 +38,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasIndex(p => p.RowId)
                 .IsUnique()
                 .IsClustered();
-            
+
             entity.Property(u => u.Username).IsRequired().HasMaxLength(50);
             entity.HasIndex(u => u.Username).IsUnique();
             entity.Property(u => u.Email).IsRequired().HasMaxLength(100);
             entity.HasIndex(u => u.Email).IsUnique();
             entity.Property(u => u.PasswordHash).IsRequired().HasMaxLength(255);
-            
+
             // Convert Role type enum to string
             entity.Property(p => p.Role)
                 .IsRequired()
                 .HasConversion<string>();
-            
+
             // Avoid soft deleted users globally while querying
             // entity.HasQueryFilter(u => u.IsActive);
         });
-        
+
         // --- Customer ---
         modelBuilder.Entity<Customer>(entity =>
         {
@@ -63,7 +63,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasIndex(c => c.RowId)
                 .IsUnique()
                 .IsClustered();
-            
+
             entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
             entity.Property(c => c.Phone).IsRequired().HasMaxLength(15);
             entity.HasIndex(c => c.Phone).IsUnique();
@@ -145,7 +145,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Category>(entity =>
         {
             entity.ToTable("Categories");
-            
+
             entity.HasKey(c => c.Id).IsClustered(false);
             entity.Property(c => c.RowId).UseIdentityColumn();
             entity.HasIndex(c => c.RowId)
@@ -167,6 +167,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .IsClustered();
 
             entity.Property(o => o.TotalAmount).HasColumnType("Decimal(18,2)");
+            entity.Property(o => o.OrderDate).IsRequired(false);
 
             entity.HasOne(o => o.Customer)
                 .WithMany(c => c.Orders)
@@ -185,8 +186,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .IsClustered();
 
             // Convert status type enum in OrderItem to string
-            entity.Property(o => o.Status).IsRequired().HasConversion<string>();
+            entity.Property(o => o.Status).IsRequired().HasConversion<string>().HasMaxLength(20);
             entity.Property(o => o.Price).HasColumnType("decimal(18,2)");
+            entity.Property(o => o.DeliveredAt).IsRequired(false);
 
             entity.HasOne(o => o.Product)
                 .WithMany(p => p.OrderItems)
@@ -202,7 +204,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<ShoppingCart>(entity =>
         {
             entity.ToTable("ShoppingCarts");
-            
+
             entity.HasKey(c => c.Id).IsClustered(false);
             entity.Property(s => s.RowId).UseIdentityColumn();
             entity.HasIndex(s => s.RowId)
@@ -218,7 +220,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<ShoppingCartItem>(entity =>
         {
             entity.ToTable("ShoppingCartItems");
-            
+
             entity.HasKey(c => c.Id).IsClustered(false);
             entity.Property(s => s.RowId).UseIdentityColumn();
             entity.HasIndex(s => s.RowId)
@@ -240,7 +242,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Wishlist>(entity =>
         {
             entity.ToTable("Wishlists");
-            
+
             entity.HasKey(w => w.Id).IsClustered(false);
             entity.Property(w => w.RowId).UseIdentityColumn();
             entity.HasIndex(w => w.RowId)
@@ -256,7 +258,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<WishlistItem>(entity =>
         {
             entity.ToTable("WishlistItems");
-            
+
             entity.HasKey(w => w.Id).IsClustered(false);
             entity.Property(w => w.RowId).UseIdentityColumn();
             entity.HasIndex(w => w.RowId)
