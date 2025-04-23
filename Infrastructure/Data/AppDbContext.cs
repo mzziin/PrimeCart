@@ -167,7 +167,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .IsClustered();
 
             entity.Property(o => o.TotalAmount).HasColumnType("Decimal(18,2)");
-            entity.Property(o => o.OrderDate).IsRequired(false);
 
             entity.HasOne(o => o.Customer)
                 .WithMany(c => c.Orders)
