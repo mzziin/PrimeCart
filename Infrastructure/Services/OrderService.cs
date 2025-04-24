@@ -4,6 +4,7 @@ using Application.IServices;
 using Domain.Enums;
 using Domain.Models;
 using Infrastructure.Data;
+using Infrastructure.Mappers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Services;
@@ -27,17 +28,7 @@ public class OrderService : IOrderService
                 CustomerId = o.CustomerId,
                 TotalAmount = o.OrderItems.Sum(oi => oi.Price * oi.Quantity),
                 OrderDate = o.OrderDate,
-                OrderItems = o.OrderItems.Select(oi => new OrderItemResponse
-                {
-                    Id = oi.Id,
-                    ProductId = oi.ProductId,
-                    ProductName = oi.Product.Name,
-                    UnitPrice = oi.Price,
-                    Quantity = oi.Quantity,
-                    TotalPrice = oi.Price * oi.Quantity,
-                    Status = oi.Status,
-                    DeliveredAt = oi.DeliveredAt
-                }).ToList()
+                OrderItems = o.OrderItems.Select(oi => oi.ToResponse()).ToList()
             }).ToListAsync();
 
         return Result<List<OrderResponse>>.Success(orders);
@@ -53,17 +44,7 @@ public class OrderService : IOrderService
                 CustomerId = o.CustomerId,
                 OrderDate = o.OrderDate,
                 TotalAmount = o.OrderItems.Sum(oi => oi.Quantity * oi.Price),
-                OrderItems = o.OrderItems.Select(oi => new OrderItemResponse
-                {
-                    Id = oi.Id,
-                    ProductId = oi.ProductId,
-                    ProductName = oi.Product.Name,
-                    UnitPrice = oi.Price,
-                    Quantity = oi.Quantity,
-                    TotalPrice = oi.Price * oi.Quantity,
-                    Status = oi.Status,
-                    DeliveredAt = oi.DeliveredAt
-                }).ToList()
+                OrderItems = o.OrderItems.Select(oi => oi.ToResponse()).ToList()
             }).FirstOrDefaultAsync();
 
         if (order is null)
@@ -80,8 +61,7 @@ public class OrderService : IOrderService
         // Validate all quantities are positive
         if (placeOrderRequest.OrderItems.Any(oi => oi.Quantity <= 0))
             return Result<OrderResponse>.Failure("All item quantities must be positive", 400);
-
-        // Validate customer exists
+        
         var customer = await _context.Customers.FindAsync(customerId);
         if (customer == null)
             return Result<OrderResponse>.Failure("Customer not found", 404);
@@ -101,7 +81,7 @@ public class OrderService : IOrderService
         if (notFoundProductIds.Count != 0)
             return Result<OrderResponse>.Failure($"Products not found: {string.Join(", ", notFoundProductIds)}", 400);
 
-        // Check product inventory (assuming Products have a Stock property)
+        // Check product inventory 
         var insufficientStockItems = placeOrderRequest.OrderItems
             .Where(oi => existingProducts[oi.ProductId].Stock < oi.Quantity)
             .Select(oi => new
@@ -196,17 +176,7 @@ public class OrderService : IOrderService
             return Result<OrderItemResponse>.Failure("Cannot change status of a delivered order item", 400);
         
         if (orderItem.Status == orderItemStatus)
-            return Result<OrderItemResponse>.Success(new OrderItemResponse()
-            {
-                Id = orderItem.Id,
-                ProductId = orderItem.ProductId,
-                ProductName = orderItem.Product.Name,
-                UnitPrice = orderItem.Price,
-                Quantity = orderItem.Quantity,
-                TotalPrice = orderItem.Price * orderItem.Quantity,
-                Status = orderItem.Status,
-                DeliveredAt = orderItem.DeliveredAt
-            });
+            return Result<OrderItemResponse>.Success(orderItem.ToResponse());
 
         if (orderItemStatus == OrderItemStatus.Cancelled)
         {
@@ -221,43 +191,20 @@ public class OrderService : IOrderService
             if (cancelledItem is null) // This should never happen as we just cancelled it
                 return Result<OrderItemResponse>.Failure("Order item not found after cancellation", 500);
 
-            return Result<OrderItemResponse>.Success(new OrderItemResponse()
-            {
-                Id = cancelledItem.Id,
-                ProductId = cancelledItem.ProductId,
-                ProductName = cancelledItem.Product.Name,
-                UnitPrice = cancelledItem.Price,
-                Quantity = cancelledItem.Quantity,
-                TotalPrice = cancelledItem.Price * cancelledItem.Quantity,
-                Status = cancelledItem.Status,
-                DeliveredAt = cancelledItem.DeliveredAt
-            });
+            return Result<OrderItemResponse>.Success(orderItem.ToResponse());
         }
 
         orderItem.Status = orderItemStatus;
 
         if (orderItemStatus == OrderItemStatus.Delivered && orderItem.DeliveredAt == null)
-        {
             orderItem.DeliveredAt = DateOnly.FromDateTime(DateTime.UtcNow);
-        }
 
         var status = await _context.SaveChangesAsync();
         
         if (status == 0)
             return Result<OrderItemResponse>.Failure("Failed to update order item status", 500);
         
-        var response = new OrderItemResponse
-        {
-            Id = orderItem.Id,
-            ProductId = orderItem.ProductId,
-            ProductName = orderItem.Product.Name,
-            UnitPrice = orderItem.Price,
-            Quantity = orderItem.Quantity,
-            TotalPrice = orderItem.Price * orderItem.Quantity,
-            Status = orderItem.Status,
-            DeliveredAt = orderItem.DeliveredAt
-        };
-        return Result<OrderItemResponse>.Success(response);
+        return Result<OrderItemResponse>.Success(orderItem.ToResponse());
     }
 
     public async Task<Result<bool>> CancelOrder(Guid orderItemId)
